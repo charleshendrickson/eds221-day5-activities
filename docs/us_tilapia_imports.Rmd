@@ -1,0 +1,94 @@
+---
+title: "us_tilapia_imports"
+author: "Charles Hendrickson"
+date: "8/13/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(here)
+library(tidyverse)
+library(janitor)
+library(skimr)
+```
+
+
+```{r}
+# Read in the data as us_tilapia_imports
+read_tilapia_csv <- read_csv(here("data", "us_tilapia_imports.csv"))
+
+# Exploring the data 
+summary(read_tilapia_csv)
+names(read_tilapia_csv)
+dim(read_tilapia_csv)
+skim(read_tilapia_csv)
+```
+
+# Use pivot_longer() to reshape the data into long format (currently, the variable “year” is spread across multiple columns). Remember to store the output so you will be able to use the reshaped data this creates.
+```{r}
+reshaped_tilapia <- read_tilapia_csv %>% 
+  pivot_longer(!country, names_to = "Year", values_to = "total_tilapia_import")   %>%
+  mutate(Year = as.numeric(Year))
+
+```
+
+# Use dplyr::group_by() %>% summarize() to find the total US tilapia imports by year, store as yearly_tilapia_tot
+```{r}
+ yearly_tilapia_tot <- reshaped_tilapia %>% 
+  dplyr::group_by(Year) %>%
+  summarize(total_tilapia_import = sum(total_tilapia_import, na.rm = TRUE)) 
+```
+
+Create a ggplot line graph of total US tilapia imports for all years in yearly_tilapia_tot. Update axis labels (include units as necessary), then export your graph as a .png to figs.
+
+```{r}
+Total_tilapia_import_by_year <- ggplot(data = yearly_tilapia_tot, aes(x = Year, y = total_tilapia_import)) +
+  geom_line() +
+  labs(
+    title = "Total U.S. Tilapia Import by Year"
+  ) +
+  xlab("Year") +
+  ylab("Total Tilapia Import (thousands of pounds)")
+
+
+Total_tilapia_import_by_year
+
+```
+
+# Create a subset that only retains imports from Ecuador, Honduras, Costa Rica, and Mexico (you decide what to name this)
+
+```{r}
+E_H_CR_M_tilapia_imports <- reshaped_tilapia %>%
+  filter(country %in% c("Ecuador", "Honduras", "Costa Rica", "Mexico"))
+
+E_H_CR_M_tilapia_imports
+
+```
+
+# Create a ggplot graph of total US tilapia imports over time, for those four countries in the subset you created above, separated by country. Update axis labels, add a title, customize your color scheme, update the theme. Export a .jpg of your graph to figs.
+
+```{r}
+E_H_CR_M_tilapia_graph <- ggplot(data = E_H_CR_M_tilapia_imports, aes(x = Year, y = total_tilapia_import, color = country)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title = "Total U.S. Tilapia Import From Ecuador, Honduras, Costa Rica, and Mexico by Year"
+  ) +
+  xlab("Year") +
+  ylab("Total Tilapia Import (thousands of pounds)")
+
+E_H_CR_M_tilapia_graph
+```
+
+
+
+```{r}
+ggsave(here("figs", "E_H_CR_M_tilapia_imports.png"), plot = E_H_CR_M_tilapia_graph )
+```
+
+
+
+
+
